@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -7,9 +8,23 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <signal.h>
+#include "command.h"
+
+void timer_handler(int signal)
+{
+	printf("alarm\n");
+}
 
 int main()
 {
+	struct itimerval it_val;
+	it_val.it_value.tv_sec = 5;
+	it_val.it_value.tv_usec = 0;
+	it_val.it_interval = it_val.it_value;
+	signal(SIGALRM, timer_handler);
+	setitimer(ITIMER_REAL, &it_val, NULL);
+
 	unsigned char buf[1000];
 	int sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)

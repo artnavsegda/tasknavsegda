@@ -1,0 +1,14 @@
+#define MAXLENGTH 256
+
+struct One {
+	char Text[MAXLENGTH];
+	int Temperature;
+	time_t Time;
+	
+};
+
+struct Two {
+	int Temperature;
+	int Light;
+	int Priority;
+};

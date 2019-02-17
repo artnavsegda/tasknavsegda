@@ -42,6 +42,8 @@ int main()
 		printf("bind ok\n");
 	}
 
+	printf("Awaiting master\n");
+
 	while(1)
 	{
 		int numread = recvfrom(sock,buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);

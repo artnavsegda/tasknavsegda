@@ -26,7 +26,7 @@ struct Two {
 	char Status;
 };
 
-stuct Nodestatus {
+struct Nodestatus {
 	int Temperature;
 	int Light;
 	in_addr_t Address;

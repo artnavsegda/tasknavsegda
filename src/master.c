@@ -7,8 +7,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include "command.h"
 
-char package[] = "hello world\n";
+char package[5] = "hello";
 
 int main()
 {

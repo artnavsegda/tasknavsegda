@@ -69,6 +69,8 @@ int main()
 			printf("Text: %s\n",buf.Text);
 			printf("M.Temp: %d\n",buf.Temperature);
 			printf("M.Light: %d\n",buf.Light);
+			printf("Status: %d\n",buf.Status);
+			printf("Priority: %d\n",buf.Priority);
 			printf("Node count: %d\n",buf.Nodecount);
 			masteraddr = other.sin_addr.s_addr;
 		}

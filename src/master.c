@@ -14,7 +14,8 @@
 
 int sock;
 struct Status primary;
-struct Nodestatus * current;
+
+int priorityroll = 1;
 
 int compare(in_addr_t *x, struct Nodestatus *y)
 {
@@ -37,7 +38,7 @@ int medianlight()
 	return light/primary.Nodecount;
 }
 
-void sendcontrol(in_addr_t Address)
+void sendcontrol(in_addr_t Address, struct Nodestatus * current)
 {
 	struct sockaddr_in other = {
 		.sin_family = AF_INET,
@@ -51,6 +52,10 @@ void sendcontrol(in_addr_t Address)
 	};
 	control.Temperature = mediantemp();
 	control.Light = medianlight();
+	control.Time = 0;
+	control.Status = 0;
+	control.Address = Address;
+	control.Priority = current->Priority;
 	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
 }
 
@@ -83,6 +88,7 @@ void timer_init(void)
 
 int main()
 {
+	struct Nodestatus * current;
 	struct Two package;
 	unsigned char buf[1000];
 
@@ -115,6 +121,7 @@ int main()
 					primary.Nodes[primary.Nodecount].Temperature = package.Temperature;
 					primary.Nodes[primary.Nodecount].Light = package.Light;
 					primary.Nodes[primary.Nodecount].Address.s_addr = other.sin_addr.s_addr;
+					primary.Nodes[primary.Nodecount].Priority = priorityroll++;
 					current = &(primary.Nodes[primary.Nodecount]);
 					primary.Nodecount++;
 				}
@@ -123,7 +130,7 @@ int main()
 					printf("Node in database\n");
 				}
 				printf("db status of node temp %d light %d priority %d status %d ip %s\n", current->Temperature, current->Light, current->Priority, current->Status, inet_ntoa(current->Address));
-				sendcontrol(other.sin_addr.s_addr);
+				sendcontrol(other.sin_addr.s_addr,current);
 			}
 			else
 			{

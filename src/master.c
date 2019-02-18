@@ -62,51 +62,63 @@ void sendcontrol(struct sockaddr_in other)
 	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
 }
 
-int main()
+void timer_init(void)
 {
-        struct itimerval it_val;
+	struct itimerval it_val;
 	it_val.it_value.tv_sec = 5;
 	it_val.it_value.tv_usec = 0;
 	it_val.it_interval = it_val.it_value;
 	signal(SIGALRM, timer_handler);
 	//setitimer(ITIMER_REAL, &it_val, NULL);
+}
 
-	struct Two package;
-	unsigned char buf[1000];
+void socket_init(void)
+{
 	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)
 	{
 		perror("socket error");
-		return 1;
+		exit(1);
 	}
 	else
 	{
 		printf("socket ok\n");
 	}
-
 	int broadcast = 1;
-
 	setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
+}
 
+void server_init(void)
+{
 	struct sockaddr_in server = {
 		.sin_family = AF_INET,
 		.sin_addr.s_addr = INADDR_ANY,
 		.sin_port = htons(10002)
 	};
 
-	struct sockaddr_in other;
-	int slen = sizeof(other);
-
 	if (bind(sock,(struct sockaddr *)&server,sizeof(server)) == -1)
 	{
 		perror("bind error");
 		close(sock);
-		return 1;
+		exit(1);
 	}
 	else
 	{
 		printf("bind ok\n");
 	}
+}
+
+int main()
+{
+	struct Two package;
+	unsigned char buf[1000];
+
+	timer_init();
+	socket_init();
+	server_init();
+
+	struct sockaddr_in other;
+	int slen = sizeof(other);
 
 	while(1)
 	{

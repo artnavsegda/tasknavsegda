@@ -9,8 +9,8 @@
 #include <netdb.h>
 #include "command.h"
 
+int sock;
 struct Status primary;
-
 struct Nodestatus * current;
 
 int compare(in_addr_t *x, struct Nodestatus *y)
@@ -18,12 +18,22 @@ int compare(in_addr_t *x, struct Nodestatus *y)
 	   return (*x - y->Address);
 }
 
+void sendcontrol(struct sockaddr_in other)
+{
+	int slen = sizeof(other);
+	struct One control = {
+		.Text = "Digitaaaal",
+		.Temperature = 42,
+		.Light = 1000,
+	};
+	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
+}
+
 int main()
 {
 	struct Two package;
-	struct One control;
 	unsigned char buf[1000];
-	int sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
+	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)
 	{
 		perror("socket error");
@@ -84,7 +94,7 @@ int main()
 				printf("Node in database\n");
 			}
 			printf("db status of node temp %d light %d priority %d status %d\n", current->Temperature, current->Light, current->Priority, current->Status);
-			int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
+			sendcontrol(other);
 		}
 	}
 

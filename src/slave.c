@@ -13,7 +13,7 @@
 
 int sock;
 
-//struct One buf;
+struct One buf;
 struct Two package;
 
 void timer_handler(int signal)
@@ -39,7 +39,7 @@ int main()
 	signal(SIGALRM, timer_handler);
 	setitimer(ITIMER_REAL, &it_val, NULL);
 
-	unsigned char buf[1000];
+	//unsigned char buf[1000];
 	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)
 	{
@@ -79,7 +79,7 @@ int main()
 
 	while(1)
 	{
-		int numread = recvfrom(sock,buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);
+		int numread = recvfrom(sock,&buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);
 		if (numread == -1)
 		{
 			perror("recv error");
@@ -87,11 +87,12 @@ int main()
 		else
 		{
 			printf("recv %d bytes\n",numread);
-			for (int i=0; i<numread;i++)
-			{
-				printf("0x%02X, ",buf[i]);
-			}
-			printf("\n");
+			printf("Text: %s\n",buf.Text);
+		//	for (int i=0; i<numread;i++)
+		//	{
+		//		printf("0x%02X, ",buf[i]);
+		//	}
+		//	printf("\n");
 		}
 	}
 

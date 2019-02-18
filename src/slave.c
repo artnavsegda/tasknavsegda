@@ -11,9 +11,20 @@
 #include <signal.h>
 #include "command.h"
 
+int sock;
+
+char package[] = "hello world\n";
+
 void timer_handler(int signal)
 {
+	struct sockaddr_in other = {
+		.sin_family = AF_INET,
+		.sin_port = htons(10001),
+		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
+	};
+	int slen = sizeof(other);
 	printf("alarm\n");
+	int numwrite = sendto(sock,package,sizeof(package),0,(struct sockaddr *)&other,slen);
 }
 
 int main()
@@ -26,7 +37,7 @@ int main()
 	setitimer(ITIMER_REAL, &it_val, NULL);
 
 	unsigned char buf[1000];
-	int sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
+	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)
 	{
 		perror("socket error");
@@ -36,6 +47,10 @@ int main()
 	{
 		printf("socket ok\n");
 	}
+
+	int broadcast = 1;
+
+	setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
 
 	struct sockaddr_in server = {
 		.sin_family = AF_INET,

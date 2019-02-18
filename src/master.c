@@ -7,12 +7,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
-#include "command.h"
-
-char package[5] = "hello";
 
 int main()
 {
+	unsigned char buf[1000];
 	int sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)
 	{
@@ -24,26 +22,42 @@ int main()
 		printf("socket ok\n");
 	}
 
-	int broadcast = 1;
-
-	setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
-
-	struct sockaddr_in other = {
+	struct sockaddr_in server = {
 		.sin_family = AF_INET,
-		.sin_port = htons(10001),
-		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
+		.sin_addr.s_addr = INADDR_ANY,
+		.sin_port = htons(10002)
 	};
 
+	struct sockaddr_in other;
 	int slen = sizeof(other);
 
-	int numwrite = sendto(sock,package,sizeof(package),0,(struct sockaddr *)&other, slen);
-	if (numwrite == -1)
+	if (bind(sock,(struct sockaddr *)&server,sizeof(server)) == -1)
 	{
-		perror("sendto error");
+		perror("bind error");
+		close(sock);
+		return 1;
 	}
 	else
 	{
-		printf("send %d bytes\n",numwrite);
+		printf("bind ok\n");
+	}
+
+	while(1)
+	{
+		int numread = recvfrom(sock,buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);
+		if (numread == -1)
+		{
+			perror("recv error");
+		}
+		else
+		{
+			printf("recv %d bytes\n",numread);
+			for (int i=0; i<numread;i++)
+			{
+				printf("0x%02X, ",buf[i]);
+			}
+			printf("\n");
+		}
 	}
 
 	shutdown(sock, 2);
@@ -51,4 +65,3 @@ int main()
 
 	return 0;
 }
-

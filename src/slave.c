@@ -30,6 +30,8 @@ void timer_handler(int signal)
 	printf("alarm\n");
 	package.Temperature = 42;
 	package.Light = 10000;
+	package.Status = 0;
+	package.Priority = 0;
 	int numwrite = sendto(sock,&package,sizeof(package),0,(struct sockaddr *)&other,slen);
 }
 

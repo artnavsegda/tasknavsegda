@@ -21,7 +21,7 @@ int socket_init(void)
 	}
 	else
 	{
-		printf("socket ok\n");
+		//printf("socket ok\n");
 	}
 	int broadcast = 1;
 	setsockopt(setsock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
@@ -44,6 +44,6 @@ void server_init(int setsock, int port)
 	}
 	else
 	{
-		printf("bind ok\n");
+		//printf("bind ok\n");
 	}
 }

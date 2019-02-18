@@ -27,7 +27,7 @@ void timer_handler(int signal)
 		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
 	};
 	int slen = sizeof(other);
-	printf("alarm\n");
+	//printf("alarm\n");
 	package.Temperature = 42;
 	package.Light = 10000;
 	package.Status = 0;
@@ -67,6 +67,9 @@ int main()
 		{
 			printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
 			printf("Text: %s\n",buf.Text);
+			printf("M.Temp: %d\n",buf.Temperature);
+			printf("M.Light: %d\n",buf.Light);
+			printf("Node count: %d\n",buf.Nodecount);
 			masteraddr = other.sin_addr.s_addr;
 		}
 	}

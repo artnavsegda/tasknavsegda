@@ -18,7 +18,7 @@ struct Nodestatus * current;
 
 int compare(in_addr_t *x, struct Nodestatus *y)
 {
-	   return (*x - y->Address);
+	   return (*x - y->Address.s_addr);
 }
 
 int mediantemp()
@@ -63,7 +63,7 @@ void timer_handler(int signal)
 		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
 	};
 	int slen = sizeof(other);
-	printf("alarm\n");
+	//printf("alarm\n");
 	package.Temperature = 0;
 	package.Light = 0;
 	package.Status = 1;
@@ -103,8 +103,8 @@ int main()
 		}
 		else
 		{
-			printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
-			printf("temp %d light %d priority %d status %d\n",package.Temperature,package.Light,package.Priority,package.Status);
+			//printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
+			//printf("temp %d light %d priority %d status %d\n",package.Temperature,package.Light,package.Priority,package.Status);
 
 			if (package.Status != 1)
 			{
@@ -114,7 +114,7 @@ int main()
 					printf("Unindentified node\n");
 					primary.Nodes[primary.Nodecount].Temperature = package.Temperature;
 					primary.Nodes[primary.Nodecount].Light = package.Light;
-					primary.Nodes[primary.Nodecount].Address = other.sin_addr.s_addr;
+					primary.Nodes[primary.Nodecount].Address.s_addr = other.sin_addr.s_addr;
 					current = &(primary.Nodes[primary.Nodecount]);
 					primary.Nodecount++;
 				}
@@ -122,11 +122,13 @@ int main()
 				{
 					printf("Node in database\n");
 				}
-				printf("db status of node temp %d light %d priority %d status %d\n", current->Temperature, current->Light, current->Priority, current->Status);
+				printf("db status of node temp %d light %d priority %d status %d ip %s\n", current->Temperature, current->Light, current->Priority, current->Status, inet_ntoa(current->Address));
 				sendcontrol(other.sin_addr.s_addr);
 			}
 			else
-				printf("Reflection refracted\n");
+			{
+				//printf("Reflection refracted\n");
+			}
 		}
 	}
 

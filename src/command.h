@@ -29,7 +29,7 @@ struct Two {
 struct Nodestatus {
 	int Temperature;
 	int Light;
-	in_addr_t Address;
+	struct in_addr Address;
 	int Priority;
 	char Status;
 };

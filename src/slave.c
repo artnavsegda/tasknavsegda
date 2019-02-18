@@ -13,18 +13,21 @@
 
 int sock;
 
-char package[] = "hello world\n";
+//struct One buf;
+struct Two package;
 
 void timer_handler(int signal)
 {
 	struct sockaddr_in other = {
 		.sin_family = AF_INET,
-		.sin_port = htons(10001),
+		.sin_port = htons(10002),
 		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
 	};
 	int slen = sizeof(other);
 	printf("alarm\n");
-	int numwrite = sendto(sock,package,sizeof(package),0,(struct sockaddr *)&other,slen);
+	package.Temperature = 42;
+	package.Light = 10000;
+	int numwrite = sendto(sock,&package,sizeof(package),0,(struct sockaddr *)&other,slen);
 }
 
 int main()

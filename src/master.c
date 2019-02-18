@@ -7,9 +7,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include "command.h"
+
+struct Status primary;
+
+struct Nodestatus * current;
+
+int compare(in_addr_t *x, struct Nodestatus *y)
+{
+	   return (*x - y->Address);
+}
 
 int main()
 {
+	struct Two package;
+	struct One control;
 	unsigned char buf[1000];
 	int sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)
@@ -21,6 +33,10 @@ int main()
 	{
 		printf("socket ok\n");
 	}
+
+	int broadcast = 1;
+
+	setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
 
 	struct sockaddr_in server = {
 		.sin_family = AF_INET,
@@ -44,19 +60,31 @@ int main()
 
 	while(1)
 	{
-		int numread = recvfrom(sock,buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);
+		int numread = recvfrom(sock,&package,sizeof(package),0,(struct sockaddr *)&other, &slen);
 		if (numread == -1)
 		{
 			perror("recv error");
 		}
 		else
 		{
-			printf("recv %d bytes\n",numread);
-			for (int i=0; i<numread;i++)
+			printf("recv %d bytes from %s\n",numread, inet_ntoa(other.sin_addr));
+			printf("temp %d light %d priority %d status %d\n",package.Temperature,package.Light,package.Priority,package.Status);
+			current = bsearch(&(other.sin_addr),primary.Nodes,primary.Nodecount,sizeof(struct Nodestatus), (int(*) (const void *, const void *)) compare);
+			if (current == NULL)
 			{
-				printf("0x%02X, ",buf[i]);
+				printf("Unindentified node\n");
+				primary.Nodes[primary.Nodecount].Temperature = package.Temperature;
+				primary.Nodes[primary.Nodecount].Light = package.Light;
+				primary.Nodes[primary.Nodecount].Address = other.sin_addr.s_addr;
+				current = &(primary.Nodes[primary.Nodecount]);
+				primary.Nodecount++;
 			}
-			printf("\n");
+			else
+			{
+				printf("Node in database\n");
+			}
+			printf("db status of node temp %d light %d priority %d status %d\n", current->Temperature, current->Light, current->Priority, current->Status);
+			int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
 		}
 	}
 

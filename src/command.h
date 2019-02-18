@@ -35,7 +35,7 @@ struct Nodestatus {
 };
 
 struct Status {
-	int Nodecount;
+	size_t Nodecount;
 	struct Nodestatus Nodes[MAXNODE];
 };
 

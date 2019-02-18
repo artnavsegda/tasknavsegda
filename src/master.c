@@ -18,13 +18,29 @@ int compare(in_addr_t *x, struct Nodestatus *y)
 	   return (*x - y->Address);
 }
 
+int mediantemp()
+{
+	int temperature;
+	for (int i = 0; i < primary.Nodecount; i++)
+		temperature += primary.Nodes[i].Temperature;
+	return temperature/primary.Nodecount;
+}
+
+int medianlight()
+{
+	int temperature;
+	for (int i = 0; i < primary.Nodecount; i++)
+		temperature += primary.Nodes[i].Temperature;
+	return temperature/primary.Nodecount;
+}
+
 void sendcontrol(struct sockaddr_in other)
 {
 	int slen = sizeof(other);
 	struct One control = {
 		.Text = "Digitaaaal",
-		.Temperature = 42,
-		.Light = 1000,
+		.Temperature = mediantemp(),
+		.Light = medianlight(),
 	};
 	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
 }

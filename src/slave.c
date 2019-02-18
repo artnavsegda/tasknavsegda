@@ -88,11 +88,6 @@ int main()
 		{
 			printf("recv %d bytes\n",numread);
 			printf("Text: %s\n",buf.Text);
-		//	for (int i=0; i<numread;i++)
-		//	{
-		//		printf("0x%02X, ",buf[i]);
-		//	}
-		//	printf("\n");
 		}
 	}
 

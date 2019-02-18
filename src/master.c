@@ -56,6 +56,7 @@ void sendcontrol(in_addr_t Address, struct Nodestatus * current)
 	control.Status = 0;
 	control.Address = Address;
 	control.Priority = current->Priority;
+	control.Nodecount = primary.Nodecount;
 	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
 }
 

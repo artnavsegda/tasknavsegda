@@ -16,6 +16,8 @@ int sock;
 struct One buf;
 struct Two package;
 
+in_addr_t masteraddr;
+
 void timer_handler(int signal)
 {
 	struct sockaddr_in other = {
@@ -39,7 +41,6 @@ int main()
 	signal(SIGALRM, timer_handler);
 	setitimer(ITIMER_REAL, &it_val, NULL);
 
-	//unsigned char buf[1000];
 	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if (sock == -1)
 	{
@@ -86,8 +87,9 @@ int main()
 		}
 		else
 		{
-			printf("recv %d bytes\n",numread);
+			printf("recv %d bytes from %s\n",numread, inet_ntoa(other.sin_addr));
 			printf("Text: %s\n",buf.Text);
+			masteraddr = other.sin_addr.s_addr;
 		}
 	}
 

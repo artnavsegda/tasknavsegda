@@ -20,7 +20,7 @@ void timer_handler(int signal)
 	struct One package;
 	struct sockaddr_in other = {
 		.sin_family = AF_INET,
-		.sin_port = htons(10002),
+		.sin_port = htons(10001),
 		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
 	};
 	int slen = sizeof(other);
@@ -69,7 +69,7 @@ int main()
 	it_val.it_value.tv_usec = 0;
 	it_val.it_interval = it_val.it_value;
 	signal(SIGALRM, timer_handler);
-	setitimer(ITIMER_REAL, &it_val, NULL);
+	//setitimer(ITIMER_REAL, &it_val, NULL);
 
 	struct Two package;
 	unsigned char buf[1000];
@@ -91,7 +91,7 @@ int main()
 	struct sockaddr_in server = {
 		.sin_family = AF_INET,
 		.sin_addr.s_addr = INADDR_ANY,
-		.sin_port = htons(10001)
+		.sin_port = htons(10002)
 	};
 
 	struct sockaddr_in other;

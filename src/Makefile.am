@@ -1,3 +1,3 @@
 bin_PROGRAMS = slave master
-slave_SOURCES = slave.c
-master_SOURCES = master.c
+slave_SOURCES = slave.c net.c
+master_SOURCES = master.c net.c

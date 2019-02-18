@@ -10,25 +10,11 @@
 #include <netdb.h>
 #include <signal.h>
 #include "command.h"
+#include "net.h"
 
 int sock;
 struct Status primary;
 struct Nodestatus * current;
-
-void timer_handler(int signal)
-{
-	struct One package;
-	struct sockaddr_in other = {
-		.sin_family = AF_INET,
-		.sin_port = htons(10001),
-		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
-	};
-	int slen = sizeof(other);
-	package.Temperature = 0;
-	package.Light = 0;
-	package.Status = 1;
-	int numwrite = sendto(sock,&package,sizeof(package),0,(struct sockaddr *)&other,slen);
-}
 
 int compare(in_addr_t *x, struct Nodestatus *y)
 {
@@ -51,8 +37,14 @@ int medianlight()
 	return temperature/primary.Nodecount;
 }
 
-void sendcontrol(struct sockaddr_in other)
+void sendcontrol(in_addr_t Address)
 {
+	struct sockaddr_in other = {
+		.sin_family = AF_INET,
+		.sin_port = htons(10001),
+		.sin_addr.s_addr = Address
+	};
+
 	int slen = sizeof(other);
 	struct One control = {
 		.Text = "Digitaaaal",
@@ -62,60 +54,13 @@ void sendcontrol(struct sockaddr_in other)
 	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
 }
 
-void timer_init(void)
-{
-	struct itimerval it_val;
-	it_val.it_value.tv_sec = 5;
-	it_val.it_value.tv_usec = 0;
-	it_val.it_interval = it_val.it_value;
-	signal(SIGALRM, timer_handler);
-	//setitimer(ITIMER_REAL, &it_val, NULL);
-}
-
-void socket_init(void)
-{
-	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
-	if (sock == -1)
-	{
-		perror("socket error");
-		exit(1);
-	}
-	else
-	{
-		printf("socket ok\n");
-	}
-	int broadcast = 1;
-	setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
-}
-
-void server_init(void)
-{
-	struct sockaddr_in server = {
-		.sin_family = AF_INET,
-		.sin_addr.s_addr = INADDR_ANY,
-		.sin_port = htons(10002)
-	};
-
-	if (bind(sock,(struct sockaddr *)&server,sizeof(server)) == -1)
-	{
-		perror("bind error");
-		close(sock);
-		exit(1);
-	}
-	else
-	{
-		printf("bind ok\n");
-	}
-}
-
 int main()
 {
 	struct Two package;
 	unsigned char buf[1000];
 
-	timer_init();
-	socket_init();
-	server_init();
+	sock = socket_init();
+	server_init(sock,10002);
 
 	struct sockaddr_in other;
 	int slen = sizeof(other);
@@ -129,7 +74,7 @@ int main()
 		}
 		else
 		{
-			printf("recv %d bytes from %s\n",numread, inet_ntoa(other.sin_addr));
+			printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
 			printf("temp %d light %d priority %d status %d\n",package.Temperature,package.Light,package.Priority,package.Status);
 			current = bsearch(&(other.sin_addr),primary.Nodes,primary.Nodecount,sizeof(struct Nodestatus), (int(*) (const void *, const void *)) compare);
 			if (current == NULL)
@@ -146,7 +91,7 @@ int main()
 				printf("Node in database\n");
 			}
 			printf("db status of node temp %d light %d priority %d status %d\n", current->Temperature, current->Light, current->Priority, current->Status);
-			sendcontrol(other);
+			sendcontrol(other.sin_addr.s_addr);
 		}
 	}
 

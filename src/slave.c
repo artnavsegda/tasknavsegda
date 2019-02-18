@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include "command.h"
+#include "net.h"
 
 int sock;
 
@@ -32,7 +33,7 @@ void timer_handler(int signal)
 	int numwrite = sendto(sock,&package,sizeof(package),0,(struct sockaddr *)&other,slen);
 }
 
-int main()
+void timer_init(void)
 {
 	struct itimerval it_val;
 	it_val.it_value.tv_sec = 5;
@@ -40,41 +41,16 @@ int main()
 	it_val.it_interval = it_val.it_value;
 	signal(SIGALRM, timer_handler);
 	setitimer(ITIMER_REAL, &it_val, NULL);
+}
 
-	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
-	if (sock == -1)
-	{
-		perror("socket error");
-		return 1;
-	}
-	else
-	{
-		printf("socket ok\n");
-	}
-
-	int broadcast = 1;
-
-	setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
-
-	struct sockaddr_in server = {
-		.sin_family = AF_INET,
-		.sin_addr.s_addr = INADDR_ANY,
-		.sin_port = htons(10001)
-	};
+int main()
+{
+	timer_init();
+	sock = socket_init();
+	server_init(sock,10001);
 
 	struct sockaddr_in other;
 	int slen = sizeof(other);
-
-	if (bind(sock,(struct sockaddr *)&server,sizeof(server)) == -1)
-	{
-		perror("bind error");
-		close(sock);
-		return 1;
-	}
-	else
-	{
-		printf("bind ok\n");
-	}
 
 	printf("Awaiting master\n");
 
@@ -87,7 +63,7 @@ int main()
 		}
 		else
 		{
-			printf("recv %d bytes from %s\n",numread, inet_ntoa(other.sin_addr));
+			printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
 			printf("Text: %s\n",buf.Text);
 			masteraddr = other.sin_addr.s_addr;
 		}

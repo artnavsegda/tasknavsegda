@@ -16,7 +16,7 @@
 
 #define LIMIT 100
 
-int sock;
+int sock, sock2;
 int countdown = 0;
 
 struct One buf;
@@ -24,8 +24,52 @@ struct Two package = {
 	.Temperature = 42,
 	.Light = 10000,
 };
+struct Two package2;
 
 in_addr_t masteraddr;
+
+int compare(in_addr_t *x, struct Nodestatus *y)
+{
+	   return (*x - y->Address.s_addr);
+}
+
+int mediantemp()
+{
+	int temperature = 0;
+	for (int i = 0; i < buf.Nodecount; i++)
+		temperature += buf.Nodes[i].Temperature;
+	return temperature/buf.Nodecount;
+}
+
+int medianlight()
+{
+	int light = 0;
+	for (int i = 0; i < buf.Nodecount; i++)
+		light += buf.Nodes[i].Light;
+	return light/buf.Nodecount;
+}
+
+void sendcontrol(in_addr_t Address, struct Nodestatus * current)
+{
+	struct sockaddr_in other = {
+		.sin_family = AF_INET,
+		.sin_port = htons(10001),
+		.sin_addr.s_addr = Address
+	};
+
+	int slen = sizeof(other);
+	struct One control = {
+		.Text = "Digitaaaal"
+	};
+	control.Temperature = mediantemp();
+	control.Light = medianlight();
+	control.Time = 0;
+	control.Status = 0;
+	control.Address = Address;
+	control.Priority = current->Priority;
+	control.Nodecount = buf.Nodecount;
+	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
+}
 
 void timer_handler(int signal)
 {
@@ -53,22 +97,17 @@ void timer_init(void)
 	setitimer(ITIMER_REAL, &it_val, NULL);
 }
 
-void start_minimaster(void)
-{
-	static char server_started = 0;
-	if (!server_started)
-	{
-		server_started = 1;
-	}
-}
-
 int main()
 {
+	struct Nodestatus * current;
 	sigset_t mask;
 	struct timespec timeout = { .tv_sec = 3 };
 	sock = socket_init();
+	sock2 = socket_init();
 	server_init(sock,10001);
+	server_init(sock2,10002);
 	struct pollfd fds[1] = {{ .fd = sock, .events = POLLIN }};
+	struct pollfd fds2[1] = {{ .fd = sock2, .events = POLLIN }};
 	sigemptyset(&mask);
 	sigaddset(&mask,SIGALRM);
 	signal(SIGALRM, timer_handler);
@@ -83,35 +122,68 @@ int main()
 	{
 		if (countdown > LIMIT)
 		{
-			start_minimaster();
-		}
-
-
-
-		int ret = ppoll(fds,1,&timeout,&mask);
-		if (ret == -1)
-		{
-			perror("poll");
-		}
-		else if (ret > 0)
-		{
-			int numread = recvfrom(sock,&buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);
-			if (numread == -1)
+			package.Status = 2;
+			int ret = ppoll(fds2,1,&timeout,&mask);
+			if (ret == -1)
 			{
-				perror("recv error");
+				perror("poll");
 			}
-			else
+			else if (ret > 0)
 			{
-				printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
-				printf("Text: %s\nM.Temp: %d\nM.Light: %d\nStatus: %d\nPriority: %d\nNode count: %d\n",buf.Text,buf.Temperature,buf.Light,buf.Status,buf.Priority,buf.Nodecount);
-				masteraddr = other.sin_addr.s_addr;
-				package.Priority = buf.Priority;
-				countdown = 0;
+				int numread = recvfrom(sock2,&package2,sizeof(package2),MSG_DONTWAIT,(struct sockaddr *)&other, &slen);
+				if (numread == -1)
+				{
+					perror("recv error");
+				}
+				else
+				{
+					if (package2.Priority == buf.Priority && package2.Status == 1)
+					{
+						//printf("Reflection refracted\n");
+					}
+					else if (package2.Priority > buf.Priority || package2.Status == 1)
+					{
+						countdown == 0;
+					}
+					else
+					{
+						current = bsearch(&(other.sin_addr),buf.Nodes,buf.Nodecount,sizeof(struct Nodestatus), (int(*) (const void *, const void *)) compare);
+						if (current)
+						{
+							sendcontrol(other.sin_addr.s_addr,current);
+						}
+					}
+				}
 			}
 		}
-		else if (ret == 0)
+		else
 		{
-			printf("poll timeout\n");
+			package.Status = 0;
+			int ret = ppoll(fds,1,&timeout,&mask);
+			if (ret == -1)
+			{
+				perror("poll");
+			}
+			else if (ret > 0)
+			{
+				int numread = recvfrom(sock,&buf,sizeof(buf),MSG_DONTWAIT,(struct sockaddr *)&other, &slen);
+				if (numread == -1)
+				{
+					perror("recv error");
+				}
+				else
+				{
+					printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
+					printf("Text: %s\nM.Temp: %d\nM.Light: %d\nStatus: %d\nPriority: %d\nNode count: %d\n",buf.Text,buf.Temperature,buf.Light,buf.Status,buf.Priority,buf.Nodecount);
+					masteraddr = other.sin_addr.s_addr;
+					package.Priority = buf.Priority;
+					countdown = 0;
+				}
+			}
+			else if (ret == 0)
+			{
+				printf("poll timeout\n");
+			}
 		}
 	}
 

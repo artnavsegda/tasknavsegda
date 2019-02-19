@@ -7,6 +7,14 @@ struct Node {
 	char Status;
 };
 
+struct Nodestatus {
+	int Temperature;
+	int Light;
+	struct in_addr Address;
+	int Priority;
+	char Status;
+};
+
 struct One {
 	char Text[MAXLENGTH];
 	int Temperature;
@@ -16,7 +24,7 @@ struct One {
 	in_addr_t Address;
 	int Priority;
 	int Nodecount;
-	struct Node Nodes[MAXNODE];
+	struct Nodestatus Nodes[MAXNODE];
 };
 
 struct Two {
@@ -26,17 +34,7 @@ struct Two {
 	char Status;
 };
 
-struct Nodestatus {
-	int Temperature;
-	int Light;
-	struct in_addr Address;
-	int Priority;
-	char Status;
-};
-
 struct Status {
 	size_t Nodecount;
 	struct Nodestatus Nodes[MAXNODE];
 };
-
-

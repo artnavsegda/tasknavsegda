@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <signal.h>
+#include <poll.h>
 #include "command.h"
 #include "net.h"
 
@@ -95,48 +96,61 @@ int main()
 
 	sock = socket_init();
 	server_init(sock,10002);
-
-	timer_init();
+	struct pollfd fds[1] = {{ .fd = sock, .events = POLLIN }};
+	//timer_init();
 
 	struct sockaddr_in other;
 	int slen = sizeof(other);
 
 	while(1)
 	{
-		int numread = recvfrom(sock,&package,sizeof(package),0,(struct sockaddr *)&other, &slen);
-		if (numread == -1)
+		int ret = poll(fds,1,5000);
+		if (ret == -1)
 		{
-			perror("recv error");
+			perror("poll");
+			return 1;
 		}
-		else
+		if (ret)
 		{
-			//printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
-			//printf("temp %d light %d priority %d status %d\n",package.Temperature,package.Light,package.Priority,package.Status);
-
-			if (package.Status != 1)
+			int numread = recvfrom(sock,&package,sizeof(package),MSG_DONTWAIT,(struct sockaddr *)&other, &slen);
+			if (numread == -1)
 			{
-				current = bsearch(&(other.sin_addr),primary.Nodes,primary.Nodecount,sizeof(struct Nodestatus), (int(*) (const void *, const void *)) compare);
-				if (current == NULL)
-				{
-					printf("Unindentified node\n");
-					primary.Nodes[primary.Nodecount].Temperature = package.Temperature;
-					primary.Nodes[primary.Nodecount].Light = package.Light;
-					primary.Nodes[primary.Nodecount].Address.s_addr = other.sin_addr.s_addr;
-					primary.Nodes[primary.Nodecount].Priority = priorityroll++;
-					current = &(primary.Nodes[primary.Nodecount]);
-					primary.Nodecount++;
-				}
-				else
-				{
-					printf("Node in database\n");
-				}
-				printf("db status of node temp %d light %d priority %d status %d ip %s\n", current->Temperature, current->Light, current->Priority, current->Status, inet_ntoa(current->Address));
-				sendcontrol(other.sin_addr.s_addr,current);
+				perror("recv error");
 			}
 			else
 			{
-				//printf("Reflection refracted\n");
+				//printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
+				//printf("temp %d light %d priority %d status %d\n",package.Temperature,package.Light,package.Priority,package.Status);
+
+				if (package.Status != 1)
+				{
+					current = bsearch(&(other.sin_addr),primary.Nodes,primary.Nodecount,sizeof(struct Nodestatus), (int(*) (const void *, const void *)) compare);
+					if (current == NULL)
+					{
+						printf("Unindentified node\n");
+						primary.Nodes[primary.Nodecount].Temperature = package.Temperature;
+						primary.Nodes[primary.Nodecount].Light = package.Light;
+						primary.Nodes[primary.Nodecount].Address.s_addr = other.sin_addr.s_addr;
+						primary.Nodes[primary.Nodecount].Priority = priorityroll++;
+						current = &(primary.Nodes[primary.Nodecount]);
+						primary.Nodecount++;
+					}
+					else
+					{
+						printf("Node in database\n");
+					}
+					printf("db status of node temp %d light %d priority %d status %d ip %s\n", current->Temperature, current->Light, current->Priority, current->Status, inet_ntoa(current->Address));
+					sendcontrol(other.sin_addr.s_addr,current);
+				}
+				else
+				{
+					//printf("Reflection refracted\n");
+				}
 			}
+		}
+		else
+		{
+			printf("poll timeout\n");
 		}
 	}
 

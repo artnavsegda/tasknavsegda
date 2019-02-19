@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -70,7 +71,7 @@ void timer_handler(int signal)
 		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
 	};
 	int slen = sizeof(other);
-	//printf("alarm\n");
+	printf("alarm\n");
 	package.Temperature = 0;
 	package.Light = 0;
 	package.Status = 1;
@@ -84,7 +85,6 @@ void timer_init(void)
 	it_val.it_value.tv_sec = 5;
 	it_val.it_value.tv_usec = 0;
 	it_val.it_interval = it_val.it_value;
-	signal(SIGALRM, timer_handler);
 	setitimer(ITIMER_REAL, &it_val, NULL);
 }
 
@@ -92,25 +92,29 @@ int main()
 {
 	struct Nodestatus * current;
 	struct Two package;
+	struct timespec timeout = { .tv_sec = 3 };
+	sigset_t mask;
 	unsigned char buf[1000];
 
 	sock = socket_init();
 	server_init(sock,10002);
 	struct pollfd fds[1] = {{ .fd = sock, .events = POLLIN }};
-	//timer_init();
+	sigemptyset(&mask);
+	sigaddset(&mask,SIGALRM);
+	signal(SIGALRM, timer_handler);
+	timer_init();
 
 	struct sockaddr_in other;
 	int slen = sizeof(other);
 
 	while(1)
 	{
-		int ret = poll(fds,1,5000);
+		int ret = ppoll(fds,1,&timeout,&mask);
 		if (ret == -1)
 		{
 			perror("poll");
-			return 1;
 		}
-		if (ret)
+		else if (ret > 0)
 		{
 			int numread = recvfrom(sock,&package,sizeof(package),MSG_DONTWAIT,(struct sockaddr *)&other, &slen);
 			if (numread == -1)
@@ -148,7 +152,7 @@ int main()
 				}
 			}
 		}
-		else
+		else if (ret == 0)
 		{
 			printf("poll timeout\n");
 		}

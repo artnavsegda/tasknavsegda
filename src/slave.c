@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -9,13 +10,18 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <signal.h>
+#include <poll.h>
 #include "command.h"
 #include "net.h"
 
 int sock;
+int countdown = 0;
 
 struct One buf;
-struct Two package;
+struct Two package = {
+	.Temperature = 42,
+	.Light = 10000,
+};
 
 in_addr_t masteraddr;
 
@@ -28,11 +34,12 @@ void timer_handler(int signal)
 	};
 	int slen = sizeof(other);
 	//printf("alarm\n");
-	package.Temperature = 42;
-	package.Light = 10000;
-	package.Status = 0;
-	package.Priority = 0;
 	int numwrite = sendto(sock,&package,sizeof(package),0,(struct sockaddr *)&other,slen);
+
+	if (package.Priority)
+	{
+		countdown += package.Priority;
+	}
 }
 
 void timer_init(void)
@@ -41,15 +48,20 @@ void timer_init(void)
 	it_val.it_value.tv_sec = 5;
 	it_val.it_value.tv_usec = 0;
 	it_val.it_interval = it_val.it_value;
-	signal(SIGALRM, timer_handler);
 	setitimer(ITIMER_REAL, &it_val, NULL);
 }
 
 int main()
 {
-	timer_init();
+	sigset_t mask;
+	struct timespec timeout = { .tv_sec = 3 };
 	sock = socket_init();
 	server_init(sock,10001);
+	struct pollfd fds[1] = {{ .fd = sock, .events = POLLIN }};
+	sigemptyset(&mask);
+	sigaddset(&mask,SIGALRM);
+	signal(SIGALRM, timer_handler);
+	timer_init();
 
 	struct sockaddr_in other;
 	int slen = sizeof(other);
@@ -58,21 +70,30 @@ int main()
 
 	while(1)
 	{
-		int numread = recvfrom(sock,&buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);
-		if (numread == -1)
+		int ret = ppoll(fds,1,&timeout,&mask);
+		if (ret == -1)
 		{
-			perror("recv error");
+			perror("poll");
 		}
-		else
+		else if (ret > 0)
 		{
-			printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
-			printf("Text: %s\n",buf.Text);
-			printf("M.Temp: %d\n",buf.Temperature);
-			printf("M.Light: %d\n",buf.Light);
-			printf("Status: %d\n",buf.Status);
-			printf("Priority: %d\n",buf.Priority);
-			printf("Node count: %d\n",buf.Nodecount);
-			masteraddr = other.sin_addr.s_addr;
+			int numread = recvfrom(sock,&buf,sizeof(buf),0,(struct sockaddr *)&other, &slen);
+			if (numread == -1)
+			{
+				perror("recv error");
+			}
+			else
+			{
+				printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
+				printf("Text: %s\nM.Temp: %d\nM.Light: %d\nStatus: %d\nPriority: %d\nNode count: %d\n",buf.Text,buf.Temperature,buf.Light,buf.Status,buf.Priority,buf.Nodecount);
+				masteraddr = other.sin_addr.s_addr;
+				package.Priority = buf.Priority;
+				countdown = 0;
+			}
+		}
+		else if (ret == 0)
+		{
+			printf("poll timeout\n");
 		}
 	}
 

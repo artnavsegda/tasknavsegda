@@ -14,6 +14,8 @@
 #include "command.h"
 #include "net.h"
 
+#define LIMIT 100
+
 int sock;
 int countdown = 0;
 
@@ -36,7 +38,7 @@ void timer_handler(int signal)
 	//printf("alarm\n");
 	int numwrite = sendto(sock,&package,sizeof(package),0,(struct sockaddr *)&other,slen);
 
-	if (package.Priority)
+	if (package.Priority && countdown <= LIMIT)
 	{
 		countdown += package.Priority;
 	}
@@ -49,6 +51,15 @@ void timer_init(void)
 	it_val.it_value.tv_usec = 0;
 	it_val.it_interval = it_val.it_value;
 	setitimer(ITIMER_REAL, &it_val, NULL);
+}
+
+void start_minimaster(void)
+{
+	static char server_started = 0;
+	if (!server_started)
+	{
+		server_started = 1;
+	}
 }
 
 int main()
@@ -70,6 +81,13 @@ int main()
 
 	while(1)
 	{
+		if (countdown > LIMIT)
+		{
+			start_minimaster();
+		}
+
+
+
 		int ret = ppoll(fds,1,&timeout,&mask);
 		if (ret == -1)
 		{

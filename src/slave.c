@@ -141,6 +141,8 @@ int main()
 				}
 				else
 				{
+					//printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
+					//printf("temp %d light %d priority %d status %d\n",package.Temperature,package.Light,package.Priority,package.Status);
 					if (package2.Priority == buf.Priority && package2.Status == 2)
 					{
 						//printf("Reflection refracted\n");

@@ -68,6 +68,7 @@ void sendcontrol(in_addr_t Address, struct Nodestatus * current)
 	control.Address = Address;
 	control.Priority = current->Priority;
 	control.Nodecount = buf.Nodecount;
+	memcpy(control.Nodes,primary.Nodes,sizeof(struct Nodestatus)*MAXNODE);
 	int numwrite = sendto(sock,&control,sizeof(control),0,(struct sockaddr *)&other, slen);
 }
 

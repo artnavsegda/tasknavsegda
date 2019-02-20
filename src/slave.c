@@ -138,7 +138,7 @@ int main()
 				}
 				else
 				{
-					if (package2.Priority == buf.Priority && package2.Status == 1)
+					if (package2.Priority == buf.Priority && package2.Status == 2)
 					{
 						//printf("Reflection refracted\n");
 					}

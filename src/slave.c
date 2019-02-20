@@ -14,7 +14,7 @@
 #include "command.h"
 #include "net.h"
 
-#define LIMIT 100
+#define LIMIT 10
 
 int sock, sock2;
 int countdown = 0;
@@ -86,6 +86,7 @@ void timer_handler(int signal)
 	if (package.Priority && countdown <= LIMIT)
 	{
 		countdown += package.Priority;
+		printf("%d steps to minimaster\n",LIMIT-countdown);
 	}
 }
 
@@ -156,6 +157,10 @@ int main()
 					}
 				}
 			}
+			else if (ret == 0)
+			{
+				printf("minimaster poll timeout\n");
+			}
 		}
 		else
 		{
@@ -183,7 +188,7 @@ int main()
 			}
 			else if (ret == 0)
 			{
-				printf("poll timeout\n");
+				printf("slave poll timeout\n");
 			}
 		}
 	}

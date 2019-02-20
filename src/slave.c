@@ -143,13 +143,14 @@ int main()
 				{
 					printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
 					printf("temp %d light %d priority %d status %d\n",package2.Temperature,package2.Light,package2.Priority,package2.Status);
-					if (package2.Priority == buf.Priority && package2.Status == 2)
+					if ((package2.Priority == buf.Priority) && (package2.Status == 2))
 					{
-						//printf("Reflection refracted\n");
+						printf("Reflection refracted\n");
 					}
-					else if (package2.Priority > buf.Priority || package2.Status == 1)
+					else if ((package2.Priority > buf.Priority) || (package2.Status == 1))
 					{
-						countdown == 0;
+						printf("Minimaster stop\n");
+						countdown = 0;
 					}
 					else
 					{

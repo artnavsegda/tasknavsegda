@@ -157,6 +157,9 @@ int main()
 						current = bsearch(&(other.sin_addr),buf.Nodes,buf.Nodecount,sizeof(struct Nodestatus), (int(*) (const void *, const void *)) compare);
 						if (current)
 						{
+							current->Temperature = package.Temperature;
+							current->Light = package.Light;
+							current->Status = package.Status;
 							sendcontrol(other.sin_addr.s_addr,current);
 						}
 					}

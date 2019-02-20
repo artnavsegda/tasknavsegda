@@ -133,8 +133,6 @@ int main()
 					if (current == NULL)
 					{
 						printf("Unindentified node\n");
-						primary.Nodes[primary.Nodecount].Temperature = package.Temperature;
-						primary.Nodes[primary.Nodecount].Light = package.Light;
 						primary.Nodes[primary.Nodecount].Address.s_addr = other.sin_addr.s_addr;
 						primary.Nodes[primary.Nodecount].Priority = priorityroll++;
 						current = &(primary.Nodes[primary.Nodecount]);
@@ -144,6 +142,9 @@ int main()
 					{
 						printf("Node in database\n");
 					}
+					current->Temperature = package.Temperature;
+					current->Light = package.Light;
+					current->Status = package.Status;
 					printf("db status of node temp %d light %d priority %d status %d ip %s\n", current->Temperature, current->Light, current->Priority, current->Status, inet_ntoa(current->Address));
 					sendcontrol(other.sin_addr.s_addr,current);
 				}

@@ -199,6 +199,7 @@ int main()
 			{
 				printf("slave poll timeout\n");
 			}
+			recvfrom(sock2,&package2,sizeof(package2),MSG_DONTWAIT,(struct sockaddr *)&other, &slen); //dirty way to flush another socket
 		}
 	}
 

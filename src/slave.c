@@ -180,7 +180,11 @@ int main()
 				else
 				{
 					printf("recv %d bytes from address %s port %d\n",numread, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
-					printf("Text: %s\nM.Temp: %d\nM.Light: %d\nStatus: %d\nPriority: %d\nNode count: %d\n",buf.Text,buf.Temperature,buf.Light,buf.Status,buf.Priority,buf.Nodecount);
+					printf("Text: %s\nM.Temp: %d\nM.Light: %d\nStatus: %d\nPriority: %d\nNode count: %d\n Node list:\n",buf.Text,buf.Temperature,buf.Light,buf.Status,buf.Priority,buf.Nodecount);
+					for (int i = 0; i < buf.Nodecount; i++)
+					{
+						printf("%d. IP: %s, PR: %d, ST: %d, T: %d, L: %d\n", i, inet_ntoa(buf.Nodes[i].Address), buf.Nodes[i].Priority, buf.Nodes[i].Status, buf.Nodes[i].Temperature, buf.Nodes[i].Light);
+					}
 					masteraddr = other.sin_addr.s_addr;
 					package.Priority = buf.Priority;
 					countdown = 0;

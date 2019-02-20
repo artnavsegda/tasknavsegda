@@ -14,7 +14,7 @@
 #include "command.h"
 #include "net.h"
 
-#define LIMIT 10
+#define LIMIT 3
 
 int sock, sock2;
 int countdown = 0;
@@ -23,6 +23,8 @@ struct One buf;
 struct Two package = {
 	.Temperature = 42,
 	.Light = 10000,
+	.Status = 0,
+	.Priority = 0
 };
 struct Two package2;
 
@@ -80,7 +82,7 @@ void timer_handler(int signal)
 		.sin_addr.s_addr = htonl(INADDR_BROADCAST)
 	};
 	int slen = sizeof(other);
-	//printf("alarm\n");
+	printf("Internal status is: %d\n", package.Status);
 	int numwrite = sendto(sock,&package,sizeof(package),0,(struct sockaddr *)&other,slen);
 
 	if (package.Priority && countdown <= LIMIT)

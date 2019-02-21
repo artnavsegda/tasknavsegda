@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#define MASTER
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
